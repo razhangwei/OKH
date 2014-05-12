@@ -51,7 +51,7 @@ function handle = plotResultCodeLength (result, codeLengths, nameList, showError
   hold off;
 
   if showLegend
-    legend(nameList, 'Location', 'NorthOutside', 'Orientation', 'horizontal');
+    legend(nameList, 'Location', 'SouthEast', 'Orientation', 'vertical');
   end
 
   grid;
