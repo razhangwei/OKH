@@ -25,19 +25,25 @@ function HammingRanking (task)
             cacheFile = sprintf('%s/code_%s_%s_%d.mat', task.cacheDir, dataset.name, method.name, codeLength);
             if loadCache(cacheFile, task.forceFresh, getConst('CACHE_VER_CODE'))
               addpath(method.path);
-              [B1, B2, timeTrain, timeTest] = method.hash(task, dataset, method, codeLength);
+              extra = 0;
+              if strcmp(method.name, 'OKH') 
+                [B1, B2, timeTrain, timeTest, extra] = method.hash(task, dataset, method, codeLength);
+              else 
+                [B1, B2, timeTrain, timeTest] = method.hash(task, dataset, method, codeLength);
+                extra = 0;
+              end              
               rmpath(method.path);
-              save(cacheFile, 'version', 'B1', 'B2', 'timeTrain', 'timeTest', '-v7.3');
+              save(cacheFile, 'version', 'B1', 'B2', 'timeTrain', 'timeTest', 'extra', '-v7.3');
             end
             fprintf('  Training time: %.4gs\n', timeTrain);
             fprintf('  Testing time: %.4gs\n', timeTest);
 
             % perform ranking using Hamming distance
-            c1 = sprintf('%s/PrecisionRecall_%s_%s_%d.mat', task.cacheDir, dataset.name, method.name, codeLength);
+            %c1 = sprintf('%s/PrecisionRecall_%s_%s_%d.mat', task.cacheDir, dataset.name, method.name, codeLength);
             c2 = sprintf('%s/MAP_%s_%s_%d.mat', task.cacheDir, dataset.name, method.name, codeLength);
-            f1 = loadCache(c1, task.forceFresh, getConst('CACHE_VER_PRECISION_RECALL'), @updaterPrecisionRecall);
+            %f1 = loadCache(c1, task.forceFresh, getConst('CACHE_VER_PRECISION_RECALL'), @updaterPrecisionRecall);
             f2 = loadCache(c2, task.forceFresh, getConst('CACHE_VER_MAP'), @updaterMAP);
-            if f1 || f2
+            if f2
               fprintf('Hamming ranking on dataset %s using %s (%d bits)\n', dataset.name, method.name, codeLength);
               cacheFile = sprintf('%s/HammingRanking_%s_%s_%d.mat', task.cacheDir, dataset.name, method.name, codeLength);
               if loadCache(cacheFile, task.forceFresh, getConst('CACHE_VER_HAMMING_RANKING'), @updaterHammingRanking)
@@ -76,17 +82,14 @@ function HammingRanking (task)
             if loadCache(cacheFile, task.forceFresh, getConst('CACHE_VER_MAP'), @updaterMAP)
               tp = timerStart();
               if strcmp(method.name, 'OKH')
-                cacheMAPIter = sprintf('%s/MAPIter_%s_%s_%d.mat', task.cacheDir, dataset.name, method.name, codeLength);
-                load(cacheMAPIter);                
-                MAP = mean(MAPIter(NoIter > method.MAPThres)); 
+                MAP = mean(extra.MAPIter(extra.NoIter > method.MAPThres) );
               else
-                [MAP, succRate] = calcMAP(orderH, dataset.neighborTest);
+                [MAP, ~] = calcMAP(orderH, dataset.neighborTest);
               end
               timeCost = timerStop(tp);
-              save(cacheFile, 'version', 'MAP', 'succRate', 'timeCost', '-v7.3');
+              save(cacheFile, 'version', 'MAP', 'timeCost', '-v7.3');
             end
             fprintf('  MAP: %.4f\n', MAP);
-            fprintf('  Success rate: %.4g\n', succRate);
             fprintf('  Time cost (elapsed): %.4gs\n', timeCost.etime);
             if (isfield(timeCost, 'ctime'))
               fprintf('  Time cost (CPU): %.4gs\n', timeCost.ctime);

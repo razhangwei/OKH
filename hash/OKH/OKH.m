@@ -74,8 +74,11 @@ function [B1, B2, t1, t2, extra] = OKH (task, dataset, method, codeLength)
   B2 = sign(X2 * W);
   t2 = toc(timerTest);
 
-  cacheDir = sprintf('%s/MAPIter_%s_%s_%d.mat', task.cacheDir, dataset.name, method.name, codeLength);
-  save(cacheDir, 'NoIter', 'MAPIter', '-v7.3');
+  % cacheDir = sprintf('%s/MAPIter_%s_%s_%d.mat', task.cacheDir, dataset.name, method.name, codeLength);
+  % save(cacheDir, 'NoIter', 'MAPIter', '-v7.3');
+  % return some extra result
+  extra.MAPIter = MAPIter;
+  extra.NoIter = NoIter;
 end
 
 function h = sign(X)
